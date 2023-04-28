@@ -1,16 +1,10 @@
-# cleancontrol
+# CleanControl
 
-A new Flutter project.
+CleanControl - это кроссплатформенное приложение от команды PRO100BYTE для контроля работы службы клининга. С помощью приложения сотрудник клининга может загружать фотоотчеты по убранному участку, указывая время начала и окончания уборки и местоположение. Проверяющий может подтвердить, что уборка завершена. Отчеты по выполненной работе хранятся не менее 14 дней и могут быть выгружены в понятном виде для жителей домов.
 
-## Getting Started
+Как использовать:
+1. Сотрудник клининга загружает фотоотчет по убранному участку в приложение, указывая время начала и окончания уборки и местоположение.
+2. Проверяющий подтверждает, что уборка завершена.
+3. Отчеты по выполненной работе хранятся не менее 14 дней и могут быть выгружены в понятном виде для жителей домов.
 
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+CleanControl позволит эффективно контролировать работу службы клининга и обеспечивать прозрачность и открытость в отношении выполненных работ.
