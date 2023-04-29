@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<TableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="4dp"
+    android:stretchColumns="*">
+
+    <TextView
+        android:id="@+id/name_text"
+        android:layout_width="340dp"
+        android:background="@drawable/border"
+        android:padding="32dp"
+        android:textSize="20sp" />
+        />
+
+
+
+</TableLayout>
