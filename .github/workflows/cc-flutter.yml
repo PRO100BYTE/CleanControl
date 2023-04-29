@@ -3,13 +3,13 @@
 # separate terms of service, privacy policy, and support
 # documentation.
 
-name: Dart
+name: CleanControl Flutter
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main/cleancontrol-flutter" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "main/cleancontrol-flutter" ]
 
 jobs:
   build:
