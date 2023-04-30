@@ -26,7 +26,7 @@ if ($result->num_rows > 0) {
   // Получаем первую строку результата в виде ассоциативного массива
   $row = $result->fetch_assoc();
   // Проверяем совпадение пароля с хешем пароля из базы данных с помощью функции password_verify
-  if (password_verify($password, $row["password"])) {
+  if ($password == $row["password"]) {
     // Если пароль совпадает с хешем
     // Создаем сессию для пользователя
     session_start();
