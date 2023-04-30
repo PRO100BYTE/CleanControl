@@ -1,6 +1,6 @@
 <html>
 <head>
-  <title>Служба клининга</title>
+  <title>CleanControl</title>
   <style>
     body {
       font-family: Arial, sans-serif;
@@ -45,47 +45,262 @@
       background-color: gray;
       cursor: not-allowed;
     }
+
+    .report-info button.reject {
+      background-color: red;
+    }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Служба клининга</h1>
-    <h2>Отчеты по уборке</h2>
-    <div id="reports"></div>
+    <h1>CleanControl</h1>
+    <div id="login-form">
+      <p>Введите свои данные для входа:</p>
+      <p><input type="text" id="username" placeholder="Имя пользователя"></p>
+      <p><input type="password" id="password" placeholder="Пароль"></p>
+      <p><button onclick="login()">Войти</button></p>
+    </div>
+    <div id="user-panel" style="display:none;">
+      <p>Здравствуйте, <span id="user-name"></span>!</p>
+      <p><button onclick="logout()">Выйти</button></p>
+    </div>
+    <div id="cleaner-panel" style="display:none;">
+      <h2>Уборка</h2>
+      <div id="cleaning-form">
+        <p><button onclick="startCleaning()">Начать уборку</button></p>
+        <p id="cleaning-timer" style="display:none;">Время уборки: <span id="cleaning-time">0</span> секунд</p>
+        <p id="cleaning-location" style="display:none;">Место уборки: <span id="cleaning-lat"></span>, <span id="cleaning-lng"></span></p>
+        <p id="cleaning-photo" style="display:none;">Фотоотчет:</p>
+        <p id="cleaning-photo-input" style="display:none;"><input type="file" id="photo-file" accept="image/*"></p>
+        <p id="cleaning-submit" style="display:none;"><button onclick="submitCleaning()">Завершить уборку</button></p>
+        <p id="cleaning-message"></p>
+      </div>
+    </div>
+    <div id="admin-panel" style="display:none;">
+      <h2>Отчеты по уборке</h2>
+      <div id="reports"></div>
+      <p><button onclick="exportReports()">Экспортировать отчеты за 14 дней</button></p>
+    </div>
   </div>
   <script>
-    // Массив с данными об отчетах
-    var reports = [
-      {
-        id: 1,
-        employee: "Иванов Иван",
-        location: "ул. Ленина, д. 1",
-        startTime: "10:00",
-        endTime: "11:30",
-        photoUrl: "https://picsum.photos/200/150?random=1",
-        confirmed: false
-      },
-      {
-        id: 2,
-        employee: "Петров Петр",
-        location: "ул. Советская, д. 5",
-        startTime: "11:00",
-        endTime: "12:15",
-        photoUrl: "https://picsum.photos/200/150?random=2",
-        confirmed: true
-      },
-      {
-        id: 3,
-        employee: "Сидоров Сидор",
-        location: "ул. Комсомольская, д. 3",
-        startTime: "12:00",
-        endTime: "13:00",
-        photoUrl: "https://picsum.photos/200/150?random=3",
-        confirmed: false
-      }
-    ];
+        // Функция для входа в веб-приложение
+        function login() {
+      // Получаем имя пользователя и пароль из полей ввода
+      var username = document.getElementById("username").value;
+      var password = document.getElementById("password").value;
+      // Создаем объект XMLHttpRequest для отправки запроса на сервер
+      var xhr = new XMLHttpRequest();
+      // Открываем соединение с сервером
+      xhr.open("POST", "login.php", true);
+      // Устанавливаем заголовок для передачи данных в формате JSON
+      xhr.setRequestHeader("Content-Type", "application/json");
+      // Определяем функцию, которая будет вызвана при получении ответа от сервера
+      xhr.onload = function() {
+        // Если статус ответа равен 200 (успешно)
+        if (xhr.status == 200) {
+          // Преобразуем ответ из JSON в объект
+          var response = JSON.parse(xhr.responseText);
+          // Если ответ содержит свойство success (успешный вход)
+          if (response.success) {
+            // Скрываем форму входа
+            document.getElementById("login-form").style.display = "none";
+            // Показываем панель пользователя
+            document.getElementById("user-panel").style.display = "block";
+            // Выводим имя пользователя
+            document.getElementById("user-name").innerText = response.username;
+            // В зависимости от статуса пользователя (администратор или уборщик)
+            if (response.status == "admin") {
+              // Показываем панель администратора
+              document.getElementById("admin-panel").style.display = "block";
+              // Загружаем отчеты по уборке с сервера
+              loadReports();
+            } else if (response.status == "cleaner") {
+              // Показываем панель уборщика
+              document.getElementById("cleaner-panel").style.display = "block";
+            }
+          } else {
+            // Если ответ содержит свойство error (ошибка входа)
+            if (response.error) {
+              // Выводим сообщение об ошибке
+              alert(response.error);
+            }
+          }
+        }
+      };
+      // Отправляем запрос на сервер с данными о пользователе в формате JSON
+      xhr.send(JSON.stringify({username: username, password: password}));
+    }
 
-    // Функция для отображения отчетов на странице
+    // Функция для выхода из веб-приложения
+    function logout() {
+      // Создаем объект XMLHttpRequest для отправки запроса на сервер
+      var xhr = new XMLHttpRequest();
+      // Открываем соединение с сервером
+      xhr.open("GET", "logout.php", true);
+      // Определяем функцию, которая будет вызвана при получении ответа от сервера
+      xhr.onload = function() {
+        // Если статус ответа равен 200 (успешно)
+        if (xhr.status == 200) {
+          // Преобразуем ответ из JSON в объект
+          var response = JSON.parse(xhr.responseText);
+          // Если ответ содержит свойство success (успешный выход)
+          if (response.success) {
+            // Скрываем панель пользователя
+            document.getElementById("user-panel").style.display = "none";
+            // Скрываем панель администратора
+            document.getElementById("admin-panel").style.display = "none";
+            // Скрываем панель уборщика
+            document.getElementById("cleaner-panel").style.display = "none";
+            // Показываем форму входа
+            document.getElementById("login-form").style.display = "block";
+          }
+        }
+      };
+      // Отправляем запрос на сервер без данных
+      xhr.send();
+    }
+
+    // Функция для начала уборки уборщиком
+    function startCleaning() {
+      // Запрашиваем разрешение на доступ к геолокации пользователя
+      navigator.geolocation.getCurrentPosition(function(position) {
+        // Если получили разрешение и координаты
+        if (position) {
+          // Скрываем кнопку "Начать уборку"
+          document.getElementById("cleaning-form").querySelector("button").style.display = "none";
+          // Показываем таймер уборки
+          document.getElementById("cleaning-timer").style.display = "block";
+          // Показываем место уборки
+          document.getElementById("cleaning-location").style.display = "block";
+          // Выводим координаты места уборки
+          document.getElementById("cleaning-lat").innerText = position.coords.latitude;
+          document.getElementById("cleaning-lng").innerText = position.coords.longitude;
+          // Запускаем таймер уборки
+          startTimer();
+        } else {
+          // Если не получили разрешение или координаты, выводим сообщение об ошибке
+          document.getElementById("cleaning-message").innerText = "Не удалось определить место уборки. Проверьте настройки геолокации.";
+        }
+      });
+    }
+
+    // Функция для запуска таймера уборки
+    function startTimer() {
+      // Получаем элемент, в котором будем выводить время уборки
+      var timerElement = document.getElementById("cleaning-time");
+      // Устанавливаем начальное значение времени уборки в секундах
+      var time = 0;
+      // Создаем переменную для хранения идентификатора интервала
+      var intervalId;
+      // Определяем функцию, которая будет вызываться каждую секунду
+      function updateTimer() {
+        // Увеличиваем время уборки на одну секунду
+        time++;
+        // Выводим время уборки в элементе
+        timerElement.innerText = time;
+      }
+      // Запускаем интервал с вызовом функции updateTimer каждую секунду и сохраняем его идентификатор в переменной intervalId
+      intervalId = setInterval(updateTimer, 1000);
+      // Сохраняем идентификатор интервала в свойстве элемента таймера для дальнейшего использования
+      timerElement.intervalId = intervalId;
+    }
+
+    // Функция для завершения уборки и отправки фотоотчета
+    function submitCleaning() {
+      // Получаем элемент с файлом фотоотчета
+      var photoFile = document.getElementById("photo-file").files[0];
+      // Если файл выбран
+      if (photoFile) {
+        // Создаем объект FormData для отправки данных на сервер
+        var formData = new FormData();
+        // Добавляем в него имя пользователя
+        formData.append("username", document.getElementById("user-name").innerText);
+        // Добавляем в него время начала уборки
+        formData.append("startTime", document.getElementById("cleaning-time").innerText);
+        // Добавляем в него координаты места уборки
+        formData.append("lat", document.getElementById("cleaning-lat").innerText);
+        formData.append("lng", document.getElementById("cleaning-lng").innerText);
+        // Добавляем в него файл фотоотчета
+        formData.append("photo", photoFile);
+        // Создаем объект XMLHttpRequest для отправки запроса на сервер
+        var xhr = new XMLHttpRequest();
+        // Открываем соединение с сервером
+        xhr.open("POST", "submit.php", true);
+        // Определяем функцию, которая будет вызвана при получении ответа от сервера
+        xhr.onload = function() {
+          // Если статус ответа равен 200 (успешно)
+          if (xhr.status == 200) {
+            // Преобразуем ответ из JSON в объект
+            var response = JSON.parse(xhr.responseText);
+            // Если ответ содержит свойство success (успешная отправка отчета)
+            if (response.success) {
+              // Выводим сообщение об успехе
+              document.getElementById("cleaning-message").innerText = "Отчет успешно отправлен.";
+              // Скрываем таймер уборки
+              document.getElementById("cleaning-timer").style.display = "none";
+              // Скрываем место уборки
+              document.getElementById("cleaning-location").style.display = "none";
+              // Скрываем фотоотчет
+              document.getElementById("cleaning-photo").style.display = "none";
+              document.getElementById("cleaning-photo-input").style.display = "none";
+              document.getElementById("cleaning-submit").style.display = "none";
+              // Показываем кнопку "Начать уборку"
+              document.getElementById("cleaning-form").querySelector("button").style.display = "block";
+              // Останавливаем таймер уборки
+              stopTimer();
+            } else {
+              // Если ответ содержит свойство error (ошибка отправки отчета)
+              if (response.error) {
+                // Выводим сообщение об ошибке
+                document.getElementById("cleaning-message").innerText = response.error;
+              }
+            }
+          }
+        };
+        // Отправляем запрос на сервер с данными об отчете в формате FormData
+        xhr.send(formData);
+      } else {
+        // Если файл не выбран, выводим сообщение об ошибке
+        document.getElementById("cleaning-message").innerText = "Выберите файл фотоотчета.";
+      }
+    }
+
+    // Функция для остановки таймера уборки
+    function stopTimer() {
+      // Получаем элемент, в котором выводится время уборки
+      var timerElement = document.getElementById("cleaning-time");
+      // Получаем идентификатор интервала из свойства элемента таймера
+      var intervalId = timerElement.intervalId;
+      // Останавливаем интервал по идентификатору
+      clearInterval(intervalId);
+    }
+
+    // Функция для загрузки отчетов по уборке с сервера для администратора
+    function loadReports() {
+      // Создаем объект XMLHttpRequest для отправки запроса на сервер
+      var xhr = new XMLHttpRequest();
+      // Открываем соединение с сервером
+      xhr.open("GET", "load.php", true);
+      // Определяем функцию, которая будет вызвана при получении ответа от сервера
+      xhr.onload = function() {
+        // Если статус ответа равен 200 (успешно)
+        if (xhr.status == 200) {
+          // Преобразуем ответ из JSON в объект
+          var response = JSON.parse(xhr.responseText);
+          // Если ответ содержит свойство reports (массив с отчетами)
+          if (response.reports) {
+            // Сохраняем массив с отчетами в глобальную переменную
+            window.reports = response.reports;
+            // Отображаем отчеты на странице
+            showReports();
+          }
+        }
+      };
+      // Отправляем запрос на сервер без данных
+      xhr.send();
+    }
+
+    // Функция для отображения отчетов на странице для администратора
     function showReports() {
       // Получаем элемент, в котором будем выводить отчеты
       var reportsElement = document.getElementById("reports");
@@ -104,37 +319,179 @@
             <p><b>Место:</b> ${reports[i].location}</p>
             <p><b>Время:</b> с ${reports[i].startTime} до ${reports[i].endTime}</p>
             <button onclick="confirmReport(${reports[i].id})">Подтвердить уборку</button>
+            <button onclick="rejectReport(${reports[i].id})" class="reject">Отклонить уборку</button>
           </div>
         `;
-        // Если отчет уже подтвержден, то делаем кнопку неактивной
+        // Если отчет уже подтвержден, то делаем кнопку подтверждения неактивной
         if (reports[i].confirmed) {
           reportElement.querySelector("button").className = "disabled";
           reportElement.querySelector("button").disabled = true;
           reportElement.querySelector("button").innerText = "Уборка подтверждена";
         }
+        // Если отчет уже отклонен, то делаем кнопку отклонения неактивной
+        if (reports[i].rejected) {
+          reportElement.querySelector("button.reject").className = "disabled";
+          reportElement.querySelector("button.reject").disabled = true;
+          reportElement.querySelector("button.reject").innerText = "Уборка отклонена";
+        }
         // Добавляем элемент с отчетом в элемент с отчетами
         reportsElement.appendChild(reportElement);
-      }
+    }
     }
 
-    // Функция для подтверждения уборки по id отчета
+    // Функция для подтверждения уборки по id отчета для администратора
     function confirmReport(id) {
-      // Проходим по массиву с отчетами
-      for (var i = 0; i < reports.length; i++) {
-        // Если находим отчет с нужным id
-        if (reports[i].id == id) {
-          // Меняем его свойство confirmed на true
-          reports[i].confirmed = true;
-          // Выходим из цикла
-          break;
+      // Создаем объект XMLHttpRequest для отправки запроса на сервер
+      var xhr = new XMLHttpRequest();
+      // Открываем соединение с сервером
+      xhr.open("POST", "confirm.php", true);
+      // Устанавливаем заголовок для передачи данных в формате JSON
+      xhr.setRequestHeader("Content-Type", "application/json");
+      // Определяем функцию, которая будет вызвана при получении ответа от сервера
+      xhr.onload = function() {
+        // Если статус ответа равен 200 (успешно)
+        if (xhr.status == 200) {
+          // Преобразуем ответ из JSON в объект
+          var response = JSON.parse(xhr.responseText);
+          // Если ответ содержит свойство success (успешное подтверждение уборки)
+          if (response.success) {
+            // Проходим по массиву с отчетами
+            for (var i = 0; i < reports.length; i++) {
+              // Если находим отчет с нужным id
+              if (reports[i].id == id) {
+                // Меняем его свойство confirmed на true
+                reports[i].confirmed = true;
+                // Выходим из цикла
+                break;
+              }
+            }
+            // Обновляем отображение отчетов на странице
+            showReports();
+          } else {
+            // Если ответ содержит свойство error (ошибка подтверждения уборки)
+            if (response.error) {
+              // Выводим сообщение об ошибке
+              alert(response.error);
+            }
+          }
         }
-      }
-      // Обновляем отображение отчетов на странице
-      showReports();
+      };
+      // Отправляем запрос на сервер с данными об id отчета в формате JSON
+      xhr.send(JSON.stringify({id: id}));
     }
 
-    // Вызываем функцию для отображения отчетов при загрузке страницы
-    showReports();
+    // Функция для отклонения уборки по id отчета для администратора
+    function rejectReport(id) {
+      // Создаем объект XMLHttpRequest для отправки запроса на сервер
+      var xhr = new XMLHttpRequest();
+      // Открываем соединение с сервером
+      xhr.open("POST", "reject.php", true);
+      // Устанавливаем заголовок для передачи данных в формате JSON
+      xhr.setRequestHeader("Content-Type", "application/json");
+      // Определяем функцию, которая будет вызвана при получении ответа от сервера
+      xhr.onload = function() {
+        // Если статус ответа равен 200 (успешно)
+        if (xhr.status == 200) {
+          // Преобразуем ответ из JSON в объект
+          var response = JSON.parse(xhr.responseText);
+          // Если ответ содержит свойство success (успешное отклонение уборки)
+          if (response.success) {
+            // Проходим по массиву с отчетами
+            for (var i = 0; i < reports.length; i++) {
+              // Если находим отчет с нужным id
+              if (reports[i].id == id) {
+                // Меняем его свойство rejected на true
+                reports[i].rejected = true;
+                // Выходим из цикла
+                break;
+              }
+            }
+            // Обновляем отображение отчетов на странице
+            showReports();
+          } else {
+            // Если ответ содержит свойство error (ошибка отклонения уборки)
+            if (response.error) {
+              // Выводим сообщение об ошибке
+              alert(response.error);
+            }
+          }
+        }
+      };
+      // Отправляем запрос на сервер с данными об id отчета в формате JSON
+      xhr.send(JSON.stringify({id: id}));
+    }
+
+    // Функция для экспорта отчетов за 14 дней в виде txt файла для администратора
+    function exportReports() {
+      // Создаем объект XMLHttpRequest для отправки запроса на сервер
+      var xhr = new XMLHttpRequest();
+      // Открываем соединение с сервером
+      xhr.open("GET", "export.php", true);
+      // Определяем функцию, которая будет вызвана при получении ответа от сервера
+      xhr.onload = function() {
+        // Если статус ответа равен 200 (успешно)
+        if (xhr.status == 200) {
+          // Преобразуем ответ из JSON в объект
+          var response = JSON.parse(xhr.responseText);
+          // Если ответ содержит свойство file (имя файла с отчетами)
+          if (response.file) {
+            // Создаем элемент ссылки для скачивания файла
+            var link = document.createElement("a");
+            link.href = response.file;
+            link.download = response.file;
+            link.style.display = "none";
+            // Добавляем элемент ссылки в документ
+            document.body.appendChild(link);
+            // Симулируем клик по ссылке
+            link.click();
+            // Удаляем элемент ссылки из документа
+            document.body.removeChild(link);
+          } else {
+            // Если ответ содержит свойство error (ошибка экспорта отчетов)
+            if (response.error) {
+              // Выводим сообщение об ошибке
+              alert(response.error);
+            }
+          }
+        }
+      };
+      // Отправляем запрос на сервер без данных
+      xhr.send();
+    }     
+// Создаем объект XMLHttpRequest для отправки запроса на сервер
+      var xhr = new XMLHttpRequest();
+      // Открываем соединение с сервером
+      xhr.open("GET", "export.php", true);
+      // Определяем функцию, которая будет вызвана при получении ответа от сервера
+      xhr.onload = function() {
+        // Если статус ответа равен 200 (успешно)
+        if (xhr.status == 200) {
+          // Преобразуем ответ из JSON в объект
+          var response = JSON.parse(xhr.responseText);
+          // Если ответ содержит свойство file (имя файла с отчетами)
+          if (response.file) {
+            // Создаем элемент ссылки для скачивания файла
+            var link = document.createElement("a");
+            link.href = response.file;
+            link.download = response.file;
+            link.style.display = "none";
+            // Добавляем элемент ссылки в документ
+            document.body.appendChild(link);
+            // Симулируем клик по ссылке
+            link.click();
+            // Удаляем элемент ссылки из документа
+            document.body.removeChild(link);
+          } else {
+            // Если ответ содержит свойство error (ошибка экспорта отчетов)
+            if (response.error) {
+              // Выводим сообщение об ошибке
+              alert(response.error);
+            }
+          }
+        }
+      };
+      // Отправляем запрос на сервер без данных
+      xhr.send();
   </script>
 </body>
 </html>
