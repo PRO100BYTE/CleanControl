@@ -1,6 +1,16 @@
 <?php
 // submit.php
 
+// Проверяем наличие сессии пользователя
+session_start();
+if (!isset($_SESSION["username"]) || !isset($_SESSION["status"])) {
+  die("Доступ запрещен.");
+}
+// Проверяем статус пользователя (должен быть уборщиком)
+if ($_SESSION["status"] != "cleaner") {
+  die("Доступ запрещен.");
+}
+
 // Подключаемся к базе данных mysql
 $host = "localhost";
 $username = "pro100byte_usr";
