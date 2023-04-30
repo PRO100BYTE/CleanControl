@@ -36,10 +36,14 @@ if ($photo) {
   move_uploaded_file($photo["tmp_name"], "uploads/" . $photoName);
   // Формируем URL для доступа к файлу фотоотчета
   $photoUrl = "http://" . $_SERVER["SERVER_NAME"] . "/uploads/" . $photoName;
-  // Формируем SQL запрос для вставки данных об отчете в базу данных
-  $sql = "INSERT INTO reports (employee, location, startTime, endTime, photoUrl) VALUES ('$username', '$lat,$lng', '$startTime', NOW(), '$photoUrl')";
-  // Выполняем SQL запрос и получаем результат
-  $result = $conn->query($sql);
+  // Формируем SQL запрос для вставки данных об отчете в базу данных с использованием подготовленных выражений для защиты от SQL-инъекций
+  $sql = "INSERT INTO reports (employee, location, startTime, endTime, photoUrl) VALUES (?, ?, ?, NOW(), ?)";
+  // Подготавливаем SQL запрос и получаем объект подготовленного выражения
+  $stmt = $conn->prepare($sql);
+  // Привязываем параметры к подготовленному выражению
+  $stmt->bind_param("ssss", $username, $lat . "," . $lng, $startTime, $photoUrl);
+  // Выполняем подготовленное выражение и получаем результат
+  $result = $stmt->execute();
   // Если результат успешный (данные об отчете вставлены в базу данных)
   if ($result) {
     // Формируем ответ в формате JSON с признаком успешной отправки отчета
