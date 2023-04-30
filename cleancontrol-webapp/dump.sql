@@ -1,9 +1,3 @@
--- Создаем базу данных pro100byte
-CREATE DATABASE pro100byte;
-
--- Выбираем базу данных pro100byte
-USE pro100byte;
-
 -- Создаем таблицу users для хранения данных о пользователях
 CREATE TABLE users (
   id INT NOT NULL AUTO_INCREMENT,
