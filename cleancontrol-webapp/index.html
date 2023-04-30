@@ -1,0 +1,140 @@
+<html>
+<head>
+  <title>Служба клининга</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .report {
+      display: flex;
+      align-items: center;
+      margin: 10px;
+      border: 1px solid gray;
+      padding: 10px;
+    }
+
+    .report img {
+      width: 200px;
+      height: 150px;
+      object-fit: cover;
+    }
+
+    .report-info {
+      margin-left: 20px;
+    }
+
+    .report-info p {
+      margin: 5px;
+    }
+
+    .report-info button {
+      background-color: green;
+      color: white;
+      padding: 10px;
+      border: none;
+      cursor: pointer;
+    }
+
+    .report-info button.disabled {
+      background-color: gray;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Служба клининга</h1>
+    <h2>Отчеты по уборке</h2>
+    <div id="reports"></div>
+  </div>
+  <script>
+    // Массив с данными об отчетах
+    var reports = [
+      {
+        id: 1,
+        employee: "Иванов Иван",
+        location: "ул. Ленина, д. 1",
+        startTime: "10:00",
+        endTime: "11:30",
+        photoUrl: "https://picsum.photos/200/150?random=1",
+        confirmed: false
+      },
+      {
+        id: 2,
+        employee: "Петров Петр",
+        location: "ул. Советская, д. 5",
+        startTime: "11:00",
+        endTime: "12:15",
+        photoUrl: "https://picsum.photos/200/150?random=2",
+        confirmed: true
+      },
+      {
+        id: 3,
+        employee: "Сидоров Сидор",
+        location: "ул. Комсомольская, д. 3",
+        startTime: "12:00",
+        endTime: "13:00",
+        photoUrl: "https://picsum.photos/200/150?random=3",
+        confirmed: false
+      }
+    ];
+
+    // Функция для отображения отчетов на странице
+    function showReports() {
+      // Получаем элемент, в котором будем выводить отчеты
+      var reportsElement = document.getElementById("reports");
+      // Очищаем его от предыдущего содержимого
+      reportsElement.innerHTML = "";
+      // Проходим по массиву с отчетами
+      for (var i = 0; i < reports.length; i++) {
+        // Создаем элемент для каждого отчета
+        var reportElement = document.createElement("div");
+        reportElement.className = "report";
+        // Добавляем в него содержимое из данных об отчете
+        reportElement.innerHTML = `
+          <img src="${reports[i].photoUrl}" alt="Фото убранного участка">
+          <div class="report-info">
+            <p><b>Сотрудник:</b> ${reports[i].employee}</p>
+            <p><b>Место:</b> ${reports[i].location}</p>
+            <p><b>Время:</b> с ${reports[i].startTime} до ${reports[i].endTime}</p>
+            <button onclick="confirmReport(${reports[i].id})">Подтвердить уборку</button>
+          </div>
+        `;
+        // Если отчет уже подтвержден, то делаем кнопку неактивной
+        if (reports[i].confirmed) {
+          reportElement.querySelector("button").className = "disabled";
+          reportElement.querySelector("button").disabled = true;
+          reportElement.querySelector("button").innerText = "Уборка подтверждена";
+        }
+        // Добавляем элемент с отчетом в элемент с отчетами
+        reportsElement.appendChild(reportElement);
+      }
+    }
+
+    // Функция для подтверждения уборки по id отчета
+    function confirmReport(id) {
+      // Проходим по массиву с отчетами
+      for (var i = 0; i < reports.length; i++) {
+        // Если находим отчет с нужным id
+        if (reports[i].id == id) {
+          // Меняем его свойство confirmed на true
+          reports[i].confirmed = true;
+          // Выходим из цикла
+          break;
+        }
+      }
+      // Обновляем отображение отчетов на странице
+      showReports();
+    }
+
+    // Вызываем функцию для отображения отчетов при загрузке страницы
+    showReports();
+  </script>
+</body>
+</html>
